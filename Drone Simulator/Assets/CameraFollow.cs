@@ -24,6 +24,6 @@ public class CameraFollow : MonoBehaviour
  
     void FollowWithLerp(){
  
-        transform.position = Vector3.Lerp(transform.position, cameraPosition, 0.1f);
+        transform.position = Vector3.Lerp(transform.position, cameraPosition, 0.3f);
     }
 }

@@ -1,27 +1,35 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DroneMovement : MonoBehaviour
 {
     [SerializeField] GameObject bulletPrefab;
+    [SerializeField] Slider boostSlider;
     Rigidbody rb;
     float movex, rotateDrone, movey, moveForward;
-    float speedUp = 12f;
-    float speedX = 10f;
-    float speedForward = 10f;
+    float speedUp = 15f;
+    float speedX = 20f;
+    float speedForward = 15f;
     float tiltAngle = 25f;
     Transform[] propellers = new Transform[4];
     bool hasDroneStarted = true;
     float shootDelay = 0.2f;
     float timeInGame;
-    float boost;
-    float rotateAngle = 45f;
+    float boost, boostSpeed;
+    float rotateAngle = 15f;
+    float maxboostPoints = 100f;
+    float boostPoints;
     void Start()
     {
+        boostPoints = 60f;
         rb = GetComponent<Rigidbody>();
         GetPropellers();
         timeInGame = Time.time;
+        boostSpeed = 5f;
+        boostSlider.maxValue = maxboostPoints;
+        boostSlider.value = boostPoints;
     }
 
 
@@ -31,14 +39,31 @@ public class DroneMovement : MonoBehaviour
         moveForward = Input.GetAxis("VerticalTurn");
         movey = Input.GetAxis("Vertical");
         rotateDrone = Input.GetAxisRaw("Horizontal");
-        boost = Input.GetAxisRaw("Boost");
+        if(boostPoints >= 1){
+            boost = Input.GetAxisRaw("Boost");
+        }else{
+            boost = 0;
+        }
         RotateProps();
         Shoot();
-        //RotateDrone();
+        ActivateBoost();
+    }
+
+    void ActivateBoost(){
+        if(boost <= 0.2f){
+            if(boostPoints < maxboostPoints){
+                boostPoints += Time.deltaTime * 10;
+            }
+        }else{
+            if(boostPoints > 1){
+                boostPoints -= Time.deltaTime * 30;
+            }
+        }
+        boostSlider.value = boostPoints;
     }
 
     private void FixedUpdate() {
-        rb.velocity = new Vector3(movex * speedX, movey * speedUp, moveForward * speedForward * 2 + boost * speedForward);
+        rb.velocity = new Vector3(movex * speedX * (1 + boost * 4/speedX * boostSpeed), movey * speedUp * (1 + boost * 2/speedUp * boostSpeed), moveForward * speedForward * 2 * (1 + boost * 4/speedForward * boostSpeed));
         rb.rotation = Quaternion.Euler(tiltAngle * moveForward, rotateAngle * rotateDrone, -tiltAngle * movex);
     }
 
@@ -75,11 +100,5 @@ public class DroneMovement : MonoBehaviour
                 timeInGame = Time.time;
             }
         }
-    }
-
-    void RotateDrone(){
-        float droneRotation = rb.rotation.y;
-        droneRotation += rotateDrone * 20f;
-        rb.rotation = Quaternion.Euler(0f,droneRotation, 0f);
     }
 }
