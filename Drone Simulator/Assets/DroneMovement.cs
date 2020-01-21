@@ -5,12 +5,13 @@ using UnityEngine.UI;
 
 public class DroneMovement : MonoBehaviour
 {
+    [SerializeField] Image heightImage;
     [SerializeField] GameObject bulletPrefab;
     [SerializeField] Slider boostSlider;
     [SerializeField] Transform crosshairTransform;
     [SerializeField] GameObject DroneObject;
     Rigidbody rb;
-    float movex, rotateDrone, movey, moveForward;
+    float movex, movey, moveForward;
     float speedUp = 15f;
     float speedX = 20f;
     float speedForward = 15f;
@@ -19,17 +20,16 @@ public class DroneMovement : MonoBehaviour
     bool hasDroneStarted = true;
     float shootDelay = 0.2f;
     float timeInGame;
-    float boost, boostSpeed;
-    float rotateAngle = 15f;
+    float boostSpeed;
     float maxboostPoints = 100f;
     float boostPoints;
+    bool isBoostActivated = false;
     void Start()
     {
         boostPoints = 60f;
         rb = GetComponent<Rigidbody>();
         GetPropellers();
         timeInGame = Time.time;
-        boostSpeed = 5f;
         boostSlider.maxValue = maxboostPoints;
         boostSlider.value = boostPoints;
     }
@@ -37,35 +37,41 @@ public class DroneMovement : MonoBehaviour
 
     void Update()
     {
-        movex = Input.GetAxis("HorizontalTurn");
-        moveForward = Input.GetAxis("VerticalTurn");
-        movey = Input.GetAxis("Vertical");
-        rotateDrone = Input.GetAxisRaw("Horizontal");
-        if(boostPoints >= 1){
-            boost = Input.GetAxisRaw("Boost");
-        }else{
-            boost = 0;
-        }
+        movex = SimpleInput.GetAxis("Horizontal");
+        moveForward = SimpleInput.GetAxis("Vertical");
+        movey = SimpleInput.GetAxis("VerticalLift");
         RotateProps();
-        Shoot();
-        ActivateBoost();
+        BoostCharging();
+        MoveHeightScale();
     }
-
-    void ActivateBoost(){
-        if(boost <= 0.2f){
-            if(boostPoints < maxboostPoints){
-                boostPoints += Time.deltaTime * 10;
-            }
-        }else{
-            if(boostPoints > 1){
-                boostPoints -= Time.deltaTime * 30;
-            }
+    void BoostCharging(){
+        if(boostPoints < maxboostPoints){
+            boostPoints += Time.deltaTime * 10;
+            boostSlider.value = boostPoints;
         }
-        boostSlider.value = boostPoints;
+        if(isBoostActivated){
+            if(boostPoints > 1){
+                boostPoints -= Time.deltaTime * 40;
+                boostSlider.value = boostPoints;
+            }else{
+                isBoostActivated = false;
+                boostSpeed = 0f;
+            }           
+        }
+    }    
+
+
+    void MoveHeightScale(){
+        heightImage.rectTransform.localPosition = new Vector3(heightImage.rectTransform.localPosition.x,- transform.position.y * 5f, heightImage.rectTransform.localPosition.z);
+    }        
+    public void ActivateBoost(){
+        print("boost activated");
+        isBoostActivated = true;
+        boostSpeed = 3f;
     }
 
     private void FixedUpdate() {
-        rb.velocity = new Vector3(movex * speedX * (1 + boost * 4/speedX * boostSpeed), movey * speedUp * (1 + boost * 2/speedUp * boostSpeed), moveForward * speedForward * 2 * (1 + boost * 4/speedForward * boostSpeed));
+        rb.velocity = new Vector3(movex * speedX * (1 + boostSpeed), movey * speedUp, moveForward * speedForward * 2 * (1 + boostSpeed));
         //rb.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
         DroneObject.transform.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
     }
@@ -96,14 +102,12 @@ public class DroneMovement : MonoBehaviour
         }
     }
 
-    void Shoot(){
-        if(Input.GetAxisRaw("Fire1") == 1){
-            if(timeInGame + shootDelay < Time.time){
-                //GameObject g = Instantiate(bulletPrefab, transform.position + new Vector3(0f,0.3f,1.2f), Quaternion.identity);
-                GameObject g = Instantiate(bulletPrefab, crosshairTransform.transform.position, Quaternion.identity);
-                //g.GetComponent<Bullet>().Initialize(crosshairTransform.transform.position - aimTransform.transform.position);
-                timeInGame = Time.time;
-            }
+    public void Shoot(){
+        if(timeInGame + shootDelay < Time.time){
+            //GameObject g = Instantiate(bulletPrefab, transform.position + new Vector3(0f,0.3f,1.2f), Quaternion.identity);
+            GameObject g = Instantiate(bulletPrefab, crosshairTransform.transform.position, Quaternion.identity);
+            //g.GetComponent<Bullet>().Initialize(crosshairTransform.transform.position - aimTransform.transform.position);
+            timeInGame = Time.time;
         }
     }
 }
