@@ -15,7 +15,7 @@ public class CameraFollow : MonoBehaviour
     }
      void FixedUpdate()
     {
-        FollowWithLerp();
+        Follow();
     }
  
     void Follow(){

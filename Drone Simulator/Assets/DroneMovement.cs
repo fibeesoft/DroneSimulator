@@ -7,6 +7,8 @@ public class DroneMovement : MonoBehaviour
 {
     [SerializeField] GameObject bulletPrefab;
     [SerializeField] Slider boostSlider;
+    [SerializeField] Transform crosshairTransform;
+    [SerializeField] GameObject DroneObject;
     Rigidbody rb;
     float movex, rotateDrone, movey, moveForward;
     float speedUp = 15f;
@@ -64,7 +66,8 @@ public class DroneMovement : MonoBehaviour
 
     private void FixedUpdate() {
         rb.velocity = new Vector3(movex * speedX * (1 + boost * 4/speedX * boostSpeed), movey * speedUp * (1 + boost * 2/speedUp * boostSpeed), moveForward * speedForward * 2 * (1 + boost * 4/speedForward * boostSpeed));
-        rb.rotation = Quaternion.Euler(tiltAngle * moveForward, rotateAngle * rotateDrone, -tiltAngle * movex);
+        //rb.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
+        DroneObject.transform.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
     }
 
 
@@ -96,7 +99,9 @@ public class DroneMovement : MonoBehaviour
     void Shoot(){
         if(Input.GetAxisRaw("Fire1") == 1){
             if(timeInGame + shootDelay < Time.time){
-                GameObject g = Instantiate(bulletPrefab, transform.position + new Vector3(0f,0.3f,1.2f), Quaternion.identity);
+                //GameObject g = Instantiate(bulletPrefab, transform.position + new Vector3(0f,0.3f,1.2f), Quaternion.identity);
+                GameObject g = Instantiate(bulletPrefab, crosshairTransform.transform.position, Quaternion.identity);
+                //g.GetComponent<Bullet>().Initialize(crosshairTransform.transform.position - aimTransform.transform.position);
                 timeInGame = Time.time;
             }
         }
