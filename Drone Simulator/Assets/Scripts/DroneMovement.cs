@@ -7,6 +7,7 @@ public class DroneMovement : MonoBehaviour
 {
     [SerializeField] Image heightImage;
     [SerializeField] GameObject bulletPrefab;
+    [SerializeField] GameObject impactPrefab;
     [SerializeField] Slider boostSlider;
     [SerializeField] Slider hpSlider;
     [SerializeField] Slider batterySlider;
@@ -17,8 +18,8 @@ public class DroneMovement : MonoBehaviour
     float movex, movey, moveForward;
     float speedUp = 25f;
     float speedX = 20f;
-    float speedForward = 15f;
-    float tiltAngle = 35f;
+    float speedForward = 20f;
+    float tiltAngle = 25f;
     Transform[] propellers = new Transform[4];
     bool hasDroneStarted = true;
     float shootDelay = 0.2f;
@@ -29,6 +30,7 @@ public class DroneMovement : MonoBehaviour
     float hp;
     float maxBattery = 100f;
     float battery;
+    Vector3 lastPosition, actualPosition, playerDirection;
 
     float boostPoints;
     bool isBoostActivated = false;
@@ -46,17 +48,23 @@ public class DroneMovement : MonoBehaviour
         boostSlider.value = boostPoints;
         hpSlider.maxValue = maxhp;
         hpSlider.value = hp;
+        lastPosition = transform.position;
     }
-
 
     void Update()
     {
+        actualPosition = transform.position;
         movex = SimpleInput.GetAxis("Horizontal");
         moveForward = SimpleInput.GetAxis("Vertical");
         movey = SimpleInput.GetAxis("VerticalLift");
-        if(Input.GetKeyDown(KeyCode.D)){
+        if(Input.GetKeyDown(KeyCode.Space)){
             ActivateBoost();
         }
+        Move();
+        lastPosition = actualPosition;
+        actualPosition = transform.position;
+        playerDirection = actualPosition - lastPosition;
+
         RotateProps();
         BoostCharging();
         MoveHeightScale();
@@ -106,7 +114,19 @@ public class DroneMovement : MonoBehaviour
         boostSpeed = 2f;
     }
 
+    void Move(){
+        transform.position += new Vector3(movex * speedX * (1 + boostSpeed), movey * speedUp, moveForward * speedForward * 2 * (1 + boostSpeed)) * Time.deltaTime;
+        transform.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
+
+        //Clamping drone movement
+        Vector3 clampPos = transform.position;
+        clampPos.x = Mathf.Clamp (clampPos.x, -75f,75f);
+        clampPos.y = Mathf.Clamp (clampPos.y, 0.5f,50f);
+        transform.position = clampPos;
+
+    }
     private void FixedUpdate() {
+        /*
         rb.velocity = new Vector3(movex * speedX * (1 + boostSpeed), movey * speedUp, moveForward * speedForward * 2 * (1 + boostSpeed));
         //rb.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
         DroneObject.transform.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
@@ -116,6 +136,7 @@ public class DroneMovement : MonoBehaviour
         clampPos.x = Mathf.Clamp (clampPos.x, -70f,70f);
         clampPos.y = Mathf.Clamp (clampPos.y, 0f,50f);
         rb.position = clampPos;
+        */
     }
 
 
@@ -131,12 +152,12 @@ public class DroneMovement : MonoBehaviour
     }
 
     void RotateProps(){
-        float idleSpeed = 2000f;
+        float idleSpeed = 1000f;
         float propSpeed = 3000f;
         for(int i = 0; i < propellers.Length; i++){
             if(hasDroneStarted){
                 if(movey != 0 || movex != 0 || moveForward != 0 ){
-                    propellers[i].transform.Rotate(0f,0f, (idleSpeed + propSpeed * movey + propSpeed * moveForward + movex * propSpeed) * Time.deltaTime);
+                    propellers[i].transform.Rotate(0f,0f, (idleSpeed + propSpeed) * Time.deltaTime);
                 }else{
                     propellers[i].transform.Rotate(0f,0f, idleSpeed * Time.deltaTime);
                 }
@@ -153,20 +174,6 @@ public class DroneMovement : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter(Collision other) {
-        if(     other.transform.CompareTag("Obstacle")
-            ||  other.transform.CompareTag("Lantern")
-            
-            
-        ){
-            hp--;
-            hpSlider.value = hp;
-            if(hp < 0){
-                GameManager.instance.GameOver();
-            }
-        }
-    }
-
     void OnTriggerEnter(Collider other) {
         if(other.transform.CompareTag("Battery")){
             if(battery <= 70f){
@@ -180,5 +187,21 @@ public class DroneMovement : MonoBehaviour
         if(other.transform.CompareTag("Finish")){
             GameManager.instance.Success();
         }
+
+        if(other.transform.CompareTag("Obstacle")){
+            HitObstacle();
+        }
     }
+
+    void HitObstacle(){
+        hp--;
+        hpSlider.value = hp;
+        transform.position -= playerDirection * 100f;
+        GameObject g = Instantiate(impactPrefab, transform.position, Quaternion.identity);
+        Destroy(g, 1f);
+        if(hp < 0){
+            GameManager.instance.GameOver();
+        }
+    }
+
 }

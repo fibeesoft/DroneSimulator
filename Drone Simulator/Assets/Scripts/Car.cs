@@ -5,10 +5,6 @@ using UnityEngine;
 public class Car : MonoBehaviour
 {
     float speed = 25f;
-    void Start()
-    {
-        
-    }
 
     void Update()
     {

@@ -7,23 +7,10 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] Transform playerTransform;
     Vector3 playerPosition;
     Vector3 cameraPosition;
- 
-     void Update()
+     void LateUpdate()
     {
         playerPosition = playerTransform.position;
         cameraPosition = new Vector3(playerPosition.x, playerPosition.y + 1f, playerPosition.z - 5f);
-    }
-     void FixedUpdate()
-    {
-        FollowWithLerp();
-    }
- 
-    void Follow(){
         transform.position = cameraPosition;
-    }
- 
-    void FollowWithLerp(){
- 
-        transform.position = Vector3.Lerp(transform.position, cameraPosition, 0.5f);
     }
 }

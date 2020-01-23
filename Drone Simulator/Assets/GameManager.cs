@@ -11,8 +11,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] Transform carSpawner1, carSpawner2, carSpawner3;
     [SerializeField] GameObject carPrefab;
     [SerializeField] Text txt_counter;
+    [SerializeField] Transform lanternContainer;
+    [SerializeField] GameObject lanternPrefab;
     float timeInGame;
     float counter = 60f;
+    float movex = 0f, movey = 0f, movez = 0f;
     private void Awake() {
         if(instance == null){
             instance = this;
@@ -28,6 +31,7 @@ public class GameManager : MonoBehaviour
         timeInGame = Time.time;
         SpawnPrefab(carSpawner1, carPrefab);
         SpawnPrefab(carSpawner2, carPrefab, true);
+        SpawnLanterns();
     }
 
     private void Update() {
@@ -49,17 +53,25 @@ public class GameManager : MonoBehaviour
     }
 
 
-
+    void SpawnLanterns(){
+        
+        for (int i = 0; i < 10; i++){
+            GameObject g = Instantiate(lanternPrefab, new Vector3(movex + 52f,movey,movez), Quaternion.identity);
+            GameObject h = Instantiate(lanternPrefab, new Vector3(movex - 52f,movey,movez), Quaternion.Euler(0f,180f,0f));
+            movez += 120f;
+        }
+    }
 
     void SpawnPrefab(Transform spawnPoint, GameObject prefab){
         if(spawnPoint != null && prefab != null){
             GameObject car = Instantiate(prefab, spawnPoint.transform.position, Quaternion.identity);
-        }
+            car.GetComponentInChildren<MeshRenderer>().materials[0].color = new Color32((byte)Random.Range(0,255),(byte)Random.Range(0,255),(byte)Random.Range(0,255),255 );        }
     }
 
     void SpawnPrefab(Transform spawnPoint, GameObject prefab, bool isRotated){
         if(spawnPoint != null && prefab != null){
             GameObject car = Instantiate(prefab, spawnPoint.transform.position, Quaternion.Euler(0f,180f,0f));
+            car.GetComponentInChildren<MeshRenderer>().materials[0].color = new Color32((byte)Random.Range(0,255),(byte)Random.Range(0,255),(byte)Random.Range(0,255),255 );
         }
     }
 
