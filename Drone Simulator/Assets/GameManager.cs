@@ -10,12 +10,16 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] Transform carSpawner1, carSpawner2, carSpawner3;
     [SerializeField] GameObject carPrefab;
+    [SerializeField] GameObject drone;
+    [SerializeField] GameObject drone3dmodel;
+    [SerializeField] GameObject firePrefab;
     [SerializeField] Text txt_counter;
     [SerializeField] Transform lanternContainer;
     [SerializeField] GameObject lanternPrefab;
     float timeInGame;
     float counter = 60f;
     float movex = 0f, movey = 0f, movez = 0f;
+    public bool IsDronAlive{get;set;}
     private void Awake() {
         if(instance == null){
             instance = this;
@@ -79,16 +83,34 @@ public class GameManager : MonoBehaviour
     public void QuitTheGame(){
         Application.Quit();
     }
-    public void GoToMainMenu(){
+    public IEnumerator GoToMainMenu(float time){
+        yield return new WaitForSeconds(time);
         SceneManager.LoadScene(0);
     }
     public void StartGame(){
         SceneManager.LoadScene(1);
+        IsDronAlive = true;
+    }
+
+    public void GoToMainMenu(){
+        SceneManager.LoadScene(0);
     }
     public void Success(){
         SceneManager.LoadScene(2);
     }
     public void GameOver(){
-        SceneManager.LoadScene(3);
+        //SceneManager.LoadScene(3);
+        StartCoroutine(GameOverAnimation());
+    }
+
+    IEnumerator GameOverAnimation(){
+        IsDronAlive = false;
+        GameObject.FindGameObjectWithTag("PilotPanel").GetComponent<Image>().color = Color.red;
+        GameObject g = Instantiate(firePrefab, drone.transform.position , Quaternion.identity);
+        g.transform.SetParent(drone.transform);
+        g.transform.localScale = new Vector3(0.3f,0.3f,0.3f);
+        yield return new WaitForSeconds(3);
+        StartCoroutine( GoToMainMenu(0f));
+
     }
 }

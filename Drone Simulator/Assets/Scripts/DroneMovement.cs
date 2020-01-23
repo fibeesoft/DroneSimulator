@@ -8,6 +8,8 @@ public class DroneMovement : MonoBehaviour
     [SerializeField] Image heightImage;
     [SerializeField] GameObject bulletPrefab;
     [SerializeField] GameObject impactPrefab;
+    [SerializeField] GameObject explodePrefab;
+
     [SerializeField] Slider boostSlider;
     [SerializeField] Slider hpSlider;
     [SerializeField] Slider batterySlider;
@@ -36,6 +38,7 @@ public class DroneMovement : MonoBehaviour
     bool isBoostActivated = false;
     void Start()
     {
+        GameManager.instance.IsDronAlive = true;
         battery = maxBattery;
         batterySlider.maxValue = maxBattery;
         batterySlider.value = battery;
@@ -53,22 +56,34 @@ public class DroneMovement : MonoBehaviour
 
     void Update()
     {
-        actualPosition = transform.position;
-        movex = SimpleInput.GetAxis("Horizontal");
-        moveForward = SimpleInput.GetAxis("Vertical");
-        movey = SimpleInput.GetAxis("VerticalLift");
-        if(Input.GetKeyDown(KeyCode.Space)){
-            ActivateBoost();
-        }
-        Move();
-        lastPosition = actualPosition;
-        actualPosition = transform.position;
-        playerDirection = actualPosition - lastPosition;
+        if(GameManager.instance.IsDronAlive){
+            actualPosition = transform.position;
+            movex = SimpleInput.GetAxis("Horizontal");
+            moveForward = SimpleInput.GetAxis("Vertical");
+            movey = SimpleInput.GetAxis("VerticalLift");
+            if(Input.GetKeyDown(KeyCode.Space)){
+                ActivateBoost();
+            }
+            Move();
+            lastPosition = actualPosition;
+            actualPosition = transform.position;
+            playerDirection = actualPosition - lastPosition;
 
-        RotateProps();
-        BoostCharging();
-        MoveHeightScale();
-        BatteryDischarge();      
+            RotateProps();
+            BoostCharging();
+            MoveHeightScale();
+            BatteryDischarge();      
+        }else{
+            CollapseBroken();
+            
+        }
+    }
+
+
+    void CollapseBroken(){
+         gameObject.transform.Rotate(0f,0.1f,0.2f,Space.Self);
+         transform.position += new Vector3(playerDirection.x * 100f,-15f,playerDirection.z * 200f)*Time.deltaTime;
+
     }
     void BoostCharging(){
         if(boostPoints < maxboostPoints){
@@ -88,7 +103,7 @@ public class DroneMovement : MonoBehaviour
 
     void BatteryDischarge(){
         if(battery > 0.1f){
-            battery -= Time.deltaTime * 5;
+            battery -= Time.deltaTime * 3;
             batterySlider.value = battery;
             if(battery > 50f){
                 batterySliderImage.color = new Color32(0,186,245,255);
@@ -124,19 +139,6 @@ public class DroneMovement : MonoBehaviour
         clampPos.y = Mathf.Clamp (clampPos.y, 0.5f,50f);
         transform.position = clampPos;
 
-    }
-    private void FixedUpdate() {
-        /*
-        rb.velocity = new Vector3(movex * speedX * (1 + boostSpeed), movey * speedUp, moveForward * speedForward * 2 * (1 + boostSpeed));
-        //rb.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
-        DroneObject.transform.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
-
-        //Clamping drone movement
-        Vector3 clampPos = rb.position;
-        clampPos.x = Mathf.Clamp (clampPos.x, -70f,70f);
-        clampPos.y = Mathf.Clamp (clampPos.y, 0f,50f);
-        rb.position = clampPos;
-        */
     }
 
 
@@ -194,6 +196,13 @@ public class DroneMovement : MonoBehaviour
     }
 
     void HitObstacle(){
+        if(GameManager.instance.IsDronAlive == false){
+            GameObject h = Instantiate(explodePrefab, transform.position, Quaternion.identity);
+            Destroy(gameObject,0f);
+            StartCoroutine(GameManager.instance.GoToMainMenu(0.5f));
+        }
+
+
         hp--;
         hpSlider.value = hp;
         transform.position -= playerDirection * 100f;
