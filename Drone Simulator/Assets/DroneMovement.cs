@@ -8,30 +8,44 @@ public class DroneMovement : MonoBehaviour
     [SerializeField] Image heightImage;
     [SerializeField] GameObject bulletPrefab;
     [SerializeField] Slider boostSlider;
+    [SerializeField] Slider hpSlider;
+    [SerializeField] Slider batterySlider;
+    [SerializeField] Image batterySliderImage;
     [SerializeField] Transform crosshairTransform;
     [SerializeField] GameObject DroneObject;
     Rigidbody rb;
     float movex, movey, moveForward;
-    float speedUp = 15f;
+    float speedUp = 25f;
     float speedX = 20f;
     float speedForward = 15f;
-    float tiltAngle = 25f;
+    float tiltAngle = 35f;
     Transform[] propellers = new Transform[4];
     bool hasDroneStarted = true;
     float shootDelay = 0.2f;
     float timeInGame;
     float boostSpeed;
     float maxboostPoints = 100f;
+    float maxhp = 5f;
+    float hp;
+    float maxBattery = 100f;
+    float battery;
+
     float boostPoints;
     bool isBoostActivated = false;
     void Start()
     {
-        boostPoints = 60f;
+        battery = maxBattery;
+        batterySlider.maxValue = maxBattery;
+        batterySlider.value = battery;
+        hp = maxhp;
+        boostPoints = 80f;
         rb = GetComponent<Rigidbody>();
         GetPropellers();
         timeInGame = Time.time;
         boostSlider.maxValue = maxboostPoints;
         boostSlider.value = boostPoints;
+        hpSlider.maxValue = maxhp;
+        hpSlider.value = hp;
     }
 
 
@@ -40,9 +54,13 @@ public class DroneMovement : MonoBehaviour
         movex = SimpleInput.GetAxis("Horizontal");
         moveForward = SimpleInput.GetAxis("Vertical");
         movey = SimpleInput.GetAxis("VerticalLift");
+        if(Input.GetKeyDown(KeyCode.D)){
+            ActivateBoost();
+        }
         RotateProps();
         BoostCharging();
         MoveHeightScale();
+        BatteryDischarge();      
     }
     void BoostCharging(){
         if(boostPoints < maxboostPoints){
@@ -58,6 +76,24 @@ public class DroneMovement : MonoBehaviour
                 boostSpeed = 0f;
             }           
         }
+    }
+
+    void BatteryDischarge(){
+        if(battery > 0.1f){
+            battery -= Time.deltaTime * 5;
+            batterySlider.value = battery;
+            if(battery > 50f){
+                batterySliderImage.color = new Color32(0,186,245,255);
+            }
+            else if(battery > 30f){
+                 batterySliderImage.color = new Color32(245,145,0,255);   
+            }
+            else{
+                batterySliderImage.color = new Color32(245,30,0,255);
+            }
+        }else{
+            GameManager.instance.GameOver();
+        }      
     }    
 
 
@@ -67,13 +103,19 @@ public class DroneMovement : MonoBehaviour
     public void ActivateBoost(){
         print("boost activated");
         isBoostActivated = true;
-        boostSpeed = 3f;
+        boostSpeed = 2f;
     }
 
     private void FixedUpdate() {
         rb.velocity = new Vector3(movex * speedX * (1 + boostSpeed), movey * speedUp, moveForward * speedForward * 2 * (1 + boostSpeed));
         //rb.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
         DroneObject.transform.rotation = Quaternion.Euler(tiltAngle * moveForward, 0f, -tiltAngle * movex);
+
+        //Clamping drone movement
+        Vector3 clampPos = rb.position;
+        clampPos.x = Mathf.Clamp (clampPos.x, -70f,70f);
+        clampPos.y = Mathf.Clamp (clampPos.y, 0f,50f);
+        rb.position = clampPos;
     }
 
 
@@ -108,6 +150,35 @@ public class DroneMovement : MonoBehaviour
             GameObject g = Instantiate(bulletPrefab, crosshairTransform.transform.position, Quaternion.identity);
             //g.GetComponent<Bullet>().Initialize(crosshairTransform.transform.position - aimTransform.transform.position);
             timeInGame = Time.time;
+        }
+    }
+
+    void OnCollisionEnter(Collision other) {
+        if(     other.transform.CompareTag("Obstacle")
+            ||  other.transform.CompareTag("Lantern")
+            
+            
+        ){
+            hp--;
+            hpSlider.value = hp;
+            if(hp < 0){
+                GameManager.instance.GameOver();
+            }
+        }
+    }
+
+    void OnTriggerEnter(Collider other) {
+        if(other.transform.CompareTag("Battery")){
+            if(battery <= 70f){
+                battery += 30f;
+            }else{
+                battery = maxBattery;
+            }
+            Destroy(other.gameObject);
+        }
+
+        if(other.transform.CompareTag("Finish")){
+            GameManager.instance.Success();
         }
     }
 }

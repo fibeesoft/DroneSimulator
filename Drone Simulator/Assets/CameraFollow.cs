@@ -15,7 +15,7 @@ public class CameraFollow : MonoBehaviour
     }
      void FixedUpdate()
     {
-        Follow();
+        FollowWithLerp();
     }
  
     void Follow(){
@@ -24,6 +24,6 @@ public class CameraFollow : MonoBehaviour
  
     void FollowWithLerp(){
  
-        transform.position = Vector3.Lerp(transform.position, cameraPosition, 0.3f);
+        transform.position = Vector3.Lerp(transform.position, cameraPosition, 0.5f);
     }
 }
