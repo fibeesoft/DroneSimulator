@@ -14,7 +14,6 @@ public class DroneMovement : MonoBehaviour
     [SerializeField] Slider hpSlider;
     [SerializeField] Slider batterySlider;
     [SerializeField] Image batterySliderImage;
-    [SerializeField] Transform crosshairTransform;
     [SerializeField] GameObject DroneObject;
     Rigidbody rb;
     float movex, movey, moveForward;
@@ -24,7 +23,6 @@ public class DroneMovement : MonoBehaviour
     float tiltAngle = 25f;
     Transform[] propellers = new Transform[4];
     bool hasDroneStarted = true;
-    float shootDelay = 0.2f;
     float timeInGame;
     float boostSpeed;
     float maxboostPoints = 100f;
@@ -103,7 +101,7 @@ public class DroneMovement : MonoBehaviour
 
     void BatteryDischarge(){
         if(battery > 0.1f){
-            battery -= Time.deltaTime * 3;
+            battery -= Time.deltaTime * 4;
             batterySlider.value = battery;
             if(battery > 50f){
                 batterySliderImage.color = new Color32(0,186,245,255);
@@ -164,15 +162,6 @@ public class DroneMovement : MonoBehaviour
                     propellers[i].transform.Rotate(0f,0f, idleSpeed * Time.deltaTime);
                 }
             }
-        }
-    }
-
-    public void Shoot(){
-        if(timeInGame + shootDelay < Time.time){
-            //GameObject g = Instantiate(bulletPrefab, transform.position + new Vector3(0f,0.3f,1.2f), Quaternion.identity);
-            GameObject g = Instantiate(bulletPrefab, crosshairTransform.transform.position, Quaternion.identity);
-            //g.GetComponent<Bullet>().Initialize(crosshairTransform.transform.position - aimTransform.transform.position);
-            timeInGame = Time.time;
         }
     }
 

@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [SerializeField] Transform carSpawner1, carSpawner2, carSpawner3;
-    [SerializeField] GameObject carPrefab;
+    [SerializeField] GameObject carPrefab, beePrefab;
     [SerializeField] GameObject drone;
     [SerializeField] GameObject drone3dmodel;
     [SerializeField] GameObject firePrefab;
@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] Transform lanternContainer;
     [SerializeField] GameObject lanternPrefab;
     float timeInGame;
-    float counter = 60f;
+    float counter = 50f;
     float movex = 0f, movey = 0f, movez = 0f;
     public bool IsDronAlive{get;set;}
     private void Awake() {
@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
     }
     void Start()
     {
+        CreateBees();
         if(txt_counter != null){
             txt_counter.text = counter.ToString("0");
         }
@@ -112,5 +113,11 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(3);
         StartCoroutine( GoToMainMenu(0f));
 
+    }
+
+    void CreateBees(){
+        for(int i = 0; i < 100; i++){
+            GameObject g = Instantiate(beePrefab, new Vector3(Random.Range(-60f,60f), Random.Range(15f,25f), Random.Range(60,1700)), Quaternion.identity);
+        }
     }
 }
