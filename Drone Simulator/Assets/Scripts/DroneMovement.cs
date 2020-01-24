@@ -34,9 +34,12 @@ public class DroneMovement : MonoBehaviour
 
     float boostPoints;
     bool isBoostActivated = false;
+    AudioSource audioSource;
+    [SerializeField] AudioSource audioSource2;
     void Start()
     {
         GameManager.instance.IsDronAlive = true;
+        audioSource = GetComponent<AudioSource>();
         battery = maxBattery;
         batterySlider.maxValue = maxBattery;
         batterySlider.value = battery;
@@ -50,6 +53,8 @@ public class DroneMovement : MonoBehaviour
         hpSlider.maxValue = maxhp;
         hpSlider.value = hp;
         lastPosition = transform.position;
+        audioSource.clip = GameManager.instance.clips[4];
+        audioSource.Play();
     }
 
     void Update()
@@ -72,8 +77,10 @@ public class DroneMovement : MonoBehaviour
             MoveHeightScale();
             BatteryDischarge();      
         }else{
-            CollapseBroken();
-            
+            if(audioSource.pitch > 0){
+                audioSource.pitch -= 0.5f * Time.deltaTime;
+            }
+            CollapseBroken();  
         }
     }
 
@@ -92,9 +99,11 @@ public class DroneMovement : MonoBehaviour
             if(boostPoints > 1){
                 boostPoints -= Time.deltaTime * 40;
                 boostSlider.value = boostPoints;
+                audioSource.pitch = 1.0f;
             }else{
                 isBoostActivated = false;
                 boostSpeed = 0f;
+                audioSource.pitch = 0.8f;
             }           
         }
     }
@@ -117,7 +126,6 @@ public class DroneMovement : MonoBehaviour
         }      
     }    
 
-
     void MoveHeightScale(){
         heightImage.rectTransform.localPosition = new Vector3(heightImage.rectTransform.localPosition.x,- transform.position.y * 5f, heightImage.rectTransform.localPosition.z);
     }        
@@ -136,9 +144,7 @@ public class DroneMovement : MonoBehaviour
         clampPos.x = Mathf.Clamp (clampPos.x, -75f,75f);
         clampPos.y = Mathf.Clamp (clampPos.y, 0.5f,50f);
         transform.position = clampPos;
-
     }
-
 
     void GetPropellers(){
         Transform[] allChildren = gameObject.GetComponentsInChildren<Transform>();
@@ -158,8 +164,10 @@ public class DroneMovement : MonoBehaviour
             if(hasDroneStarted){
                 if(movey != 0 || movex != 0 || moveForward != 0 ){
                     propellers[i].transform.Rotate(0f,0f, (idleSpeed + propSpeed) * Time.deltaTime);
+                    audioSource.pitch = 0.8f;
                 }else{
                     propellers[i].transform.Rotate(0f,0f, idleSpeed * Time.deltaTime);
+                    audioSource.pitch = 0.6f;
                 }
             }
         }
@@ -187,19 +195,20 @@ public class DroneMovement : MonoBehaviour
     void HitObstacle(){
         if(GameManager.instance.IsDronAlive == false){
             GameObject h = Instantiate(explodePrefab, transform.position, Quaternion.identity);
+            AudioSource.PlayClipAtPoint(GameManager.instance.clips[2], transform.position);
             Destroy(gameObject,0f);
             StartCoroutine(GameManager.instance.GoToMainMenu(0.5f));
         }
 
-
         hp--;
         hpSlider.value = hp;
-        transform.position -= playerDirection * 100f;
+        transform.position -= playerDirection.normalized * 10f;
         GameObject g = Instantiate(impactPrefab, transform.position, Quaternion.identity);
         Destroy(g, 1f);
         if(hp < 0){
             GameManager.instance.GameOver();
         }
+        audioSource2.clip = GameManager.instance.clips[0];
+        audioSource2.Play();
     }
-
 }

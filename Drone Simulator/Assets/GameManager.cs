@@ -16,6 +16,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] Text txt_counter;
     [SerializeField] Transform lanternContainer;
     [SerializeField] GameObject lanternPrefab;
+    public AudioClip[] clips;
+    public AudioClip clickClip;
+    AudioSource audioSource;
     float timeInGame;
     float counter = 50f;
     float movex = 0f, movey = 0f, movez = 0f;
@@ -26,9 +29,11 @@ public class GameManager : MonoBehaviour
         }else{
             Destroy(gameObject);
         }
+        //DontDestroyOnLoad(gameObject);
     }
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         CreateBees();
         if(txt_counter != null){
             txt_counter.text = counter.ToString("0");
@@ -59,11 +64,12 @@ public class GameManager : MonoBehaviour
 
 
     void SpawnLanterns(){
-        
-        for (int i = 0; i < 10; i++){
-            GameObject g = Instantiate(lanternPrefab, new Vector3(movex + 52f,movey,movez), Quaternion.identity);
-            GameObject h = Instantiate(lanternPrefab, new Vector3(movex - 52f,movey,movez), Quaternion.Euler(0f,180f,0f));
-            movez += 120f;
+        if(lanternPrefab != null){
+            for (int i = 0; i < 17; i++){
+                GameObject g = Instantiate(lanternPrefab, new Vector3(movex + 52f,movey,movez), Quaternion.identity);
+                GameObject h = Instantiate(lanternPrefab, new Vector3(movex - 52f,movey,movez), Quaternion.Euler(0f,180f,0f));
+                movez += 120f;
+            }
         }
     }
 
@@ -88,13 +94,24 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(time);
         SceneManager.LoadScene(0);
     }
-    public void StartGame(){
+
+    public IEnumerator GoToGameScene(float time){
+        PlayClickSound();
+        yield return new WaitForSeconds(time);
         SceneManager.LoadScene(1);
+    }
+    public void StartGame(){
+        //SceneManager.LoadScene(1);
+        PlayClickSound();
+        StartCoroutine(GoToGameScene(0.3f));
         IsDronAlive = true;
     }
 
+    
+
     public void GoToMainMenu(){
-        SceneManager.LoadScene(0);
+        PlayClickSound();
+        StartCoroutine(GoToMainMenu(0.3f));
     }
     public void Success(){
         SceneManager.LoadScene(2);
@@ -107,17 +124,25 @@ public class GameManager : MonoBehaviour
     IEnumerator GameOverAnimation(){
         IsDronAlive = false;
         GameObject.FindGameObjectWithTag("PilotPanel").GetComponent<Image>().color = Color.red;
-        GameObject g = Instantiate(firePrefab, drone.transform.position , Quaternion.identity);
-        g.transform.SetParent(drone.transform);
-        g.transform.localScale = new Vector3(0.3f,0.3f,0.3f);
+        if(firePrefab != null){
+            GameObject g = Instantiate(firePrefab, drone.transform.position , Quaternion.identity);
+            g.transform.SetParent(drone.transform);
+            g.transform.localScale = new Vector3(0.3f,0.3f,0.3f);
+        }
         yield return new WaitForSeconds(3);
         StartCoroutine( GoToMainMenu(0f));
-
     }
 
     void CreateBees(){
-        for(int i = 0; i < 100; i++){
-            GameObject g = Instantiate(beePrefab, new Vector3(Random.Range(-60f,60f), Random.Range(15f,25f), Random.Range(60,1700)), Quaternion.identity);
+        if(beePrefab != null){
+            for(int i = 0; i < 100; i++){
+                GameObject g = Instantiate(beePrefab, new Vector3(Random.Range(-60f,60f), Random.Range(15f,25f), Random.Range(60,1700)), Quaternion.identity);
+            }
         }
+    }
+
+    public void PlayClickSound(){
+        audioSource.clip = clickClip;
+        audioSource.Play();
     }
 }
